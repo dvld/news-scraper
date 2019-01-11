@@ -38,7 +38,7 @@ app.get('/scrape', function (req, res) {
       let result = {};
 
       // info to scrape
-      result.title = $(this)
+      result.headline = $(this)
         .children()
         .find('div.content')
         .find('div.text')
@@ -82,11 +82,37 @@ app.get('/scrape', function (req, res) {
 });
 
 // get all articles from news-scraper-db
-app.get('/article', function(req, res) {
-
+app.get('/articles', function (req, res) {
+  db.Article.find({})
+    .then(function (dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function (err) {
+      res.json(err);
+    });
 });
 
-// get Articles by id, populate with Comments
-app.get('/articles/:id', function (req, res) {
-
+// saving Comments and associating with an article
+app.post('/submit', function (req, res) {
+  db.Comment.create(req.body)
+    .then(function (dbComment) {
+      return db.Article.findOneAndUpdate({}, { $push: { comments: dbComment._id } }, { new: true });
+    })
+    .then(function (dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function (err) {
+      res.json(err);
+    });
 });
+
+// delete comment
+app.delete('/comments/:id', function (req, res) {
+  res.send('Deleting...');
+  Comment.findById(req.params.id, function (err, comment) {
+    comment.remove(function (err, comment) {
+      res.render('index.js');
+    });
+  });
+});
+
