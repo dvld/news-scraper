@@ -94,7 +94,7 @@ app.get('/scrape', function (req, res) {
         .attr('href');
 
       // create new Article using result object
-      db.Article.create(result)
+      Article.create(result)
         .then(function (dbArticle) {
           console.log(dbArticle);
         })
