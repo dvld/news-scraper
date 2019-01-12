@@ -19,11 +19,32 @@ $(document).on('click', 'p', () => {
 
       $('#articles').append('<h2>' + data.headline + '</h2>');
 
-      $('#articles').append('');
+      $('#articles').append("<textarea id='bodyinput' name='body'></textarea>");
 
-      $('#articles').append();
+      $('#articles').append("<button data-id'" + data._id + "' id='savecomment'>Save Comment</button>");
 
-      $('#articles').append();
+      if (data.comment) {
+        $('#bodyinput').val(data.comment.body);
+      }
 
-    })
-})
+    });
+});
+
+$(document).on('click', '#savecomment', function () {
+
+  let thisId = $(this).attr('data-id');
+
+  $.ajax({
+    method: 'POST',
+    url: '/articles/' + thisId,
+    data: {
+      body: $('#bodyinput').val()
+    }
+  })
+    .then(function (data) {
+      console.log(data);
+      $('#notes').empty();
+    });
+
+  $('#bodyinput').val('');
+});

@@ -4,16 +4,15 @@
 const express = require('express');
 const exphbs = require('express-handlebars');
 
+const mongojs = require('mongojs');
 const mongoose = require('mongoose');
 
 const cheerio = require('cheerio');
 const axios = require('axios');
 
 const db = require('./models');
-const Article = require('./models/Article');
-const Comments = require('./models/Comments');
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost/news-scraper-db';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost/news-scraper-db';
 
 const PORT = process.env.port || 3000;
 
@@ -23,33 +22,18 @@ const app = express();
 // middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 // connect to mongo db
+mongoose.connect(MONGODB_URI);
 
 // use handlebars
 app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
 
+
+
 // routes
-app.use('/', htmlRoutes);
-app.use('/api', apiRoutes);
-
-mongoose.connect(mongoUri, {
-  useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false
-})
-  .then(function () {
-    console.log('Mongo Connected');
-    app.listen(PORT, function () {
-      console.log(`Now listening on port: ${PORT}`)
-    })
-      .catch(function (err) {
-        console.log(err);
-      });
-  });
-
-
-
 
 // scrape route
 app.get('/scrape', function (req, res) {
@@ -94,7 +78,7 @@ app.get('/scrape', function (req, res) {
         .attr('href');
 
       // create new Article using result object
-      Article.create(result)
+      db.Article.create(result)
         .then(function (dbArticle) {
           console.log(dbArticle);
         })
