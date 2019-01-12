@@ -2,13 +2,20 @@
 // 
 // dependencies
 const express = require('express');
-const exphb = require('express-handlebars');
+const exphbs = require('express-handlebars');
+
 const mongoose = require('mongoose');
+
 const cheerio = require('cheerio');
 const axios = require('axios');
-const db = require('./models');
 
-let PORT = 3000;
+const db = require('./models');
+const Article = require('./models/Article');
+const Comments = require('./models/Comments');
+
+const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost/news-scraper-db';
+
+const PORT = process.env.port || 3000;
 
 // init express
 const app = express();
@@ -16,12 +23,33 @@ const app = express();
 // middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // connect to mongo db
-mongoose.connect('mongodb://localhost/news-scraper-db', { useNewUrlParser: true });
+
+// use handlebars
+app.engine('handlebars', exphbs({ defaultLayout: 'main' }));
+app.set('view engine', 'handlebars');
 
 // routes
+app.use('/', htmlRoutes);
+app.use('/api', apiRoutes);
+
+mongoose.connect(mongoUri, {
+  useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false
+})
+  .then(function () {
+    console.log('Mongo Connected');
+    app.listen(PORT, function () {
+      console.log(`Now listening on port: ${PORT}`)
+    })
+      .catch(function (err) {
+        console.log(err);
+      });
+  });
+
+
+
 
 // scrape route
 app.get('/scrape', function (req, res) {
@@ -78,41 +106,6 @@ app.get('/scrape', function (req, res) {
     // client message
     res.send('Scraping Complete');
 
-  });
-});
-
-// get all articles from news-scraper-db
-app.get('/articles', function (req, res) {
-  db.Article.find({})
-    .then(function (dbArticle) {
-      res.json(dbArticle);
-    })
-    .catch(function (err) {
-      res.json(err);
-    });
-});
-
-// saving Comments and associating with an article
-app.post('/submit', function (req, res) {
-  db.Comment.create(req.body)
-    .then(function (dbComment) {
-      return db.Article.findOneAndUpdate({}, { $push: { comments: dbComment._id } }, { new: true });
-    })
-    .then(function (dbArticle) {
-      res.json(dbArticle);
-    })
-    .catch(function (err) {
-      res.json(err);
-    });
-});
-
-// delete comment
-app.delete('/comments/:id', function (req, res) {
-  res.send('Deleting...');
-  Comment.findById(req.params.id, function (err, comment) {
-    comment.remove(function (err, comment) {
-      res.render('index.js');
-    });
   });
 });
 

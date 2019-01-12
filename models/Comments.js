@@ -8,8 +8,16 @@ const Schema = mongoose.Schema;
 
 // create schema object
 let CommentSchema = new Schema({
-  title: String,
-  body: String
+
+  comment: {
+    type: String,
+    required: true
+  },
+
+  deleted: {
+    type: Boolean,
+    default: false
+  }
 });
 
 // create model
